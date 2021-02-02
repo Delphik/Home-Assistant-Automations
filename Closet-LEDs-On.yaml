@@ -1,0 +1,12 @@
+alias: Closet LEDs On
+description: ''
+trigger:
+  - platform: time
+    at: '12:00'
+condition: []
+action:
+  - type: turn_on
+    device_id: b918de32c40a4fb98217cf19ba6f394f
+    entity_id: switch.cf3_maxsclosetleds_3
+    domain: switch
+mode: single

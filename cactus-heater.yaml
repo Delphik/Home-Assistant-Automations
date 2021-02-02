@@ -1,0 +1,14 @@
+alias: Cactus Heater
+description: ''
+trigger:
+  - at: '6:00'
+    platform: time
+  - at: '18:00'
+    platform: time
+condition: []
+action:
+  - device_id: c15c7196af544f829db19431ca9ad3d5
+    domain: switch
+    entity_id: switch.cloudfree_2
+    type: toggle
+mode: single
