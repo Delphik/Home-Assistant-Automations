@@ -1,6 +1,6 @@
 from zigpy.quirks import CustomDevice
 from zigpy.quirks.v2 import CustomCluster
-from zigpy.zcl.foundation import DataTypeId
+import zigpy.types as t
 from zigpy.zcl.clusters import general
 from zigpy.profiles import zha
 
@@ -9,9 +9,9 @@ class ManuSpecificSengledMotionSensor(CustomCluster):
     manufacturer_id = 0x1160
     name = "ManuSpecificSengledMotionSensor"
     attributes = {
-        0x0001: ("enable_auto_on_off", DataTypeId.bool_),
-        # You can add more attributes later if needed, e.g.:
-        # 0x0002: ("off_delay", DataTypeId.uint16),
+        0x0001: ("enable_auto_on_off", t.Bool),
+        # Add more later if you want (e.g. off_delay):
+        # 0x0002: ("off_delay", t.uint16_t),
     }
 
 class SengledE13N11(CustomDevice):
@@ -23,7 +23,7 @@ class SengledE13N11(CustomDevice):
                 "input_clusters": [
                     general.OnOff.cluster_id,
                     general.LevelControl.cluster_id,
-                    0xfc01,  # your manufacturer-specific cluster
+                    0xfc01,
                 ],
                 "output_clusters": [],
             }
