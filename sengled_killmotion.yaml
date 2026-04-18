@@ -1,33 +1,37 @@
-alias: "Sengled Floodlights: Hardware Lockout"
-description: "Disables hardware-level motion triggers via Sengled manufacturer cluster"
+alias: "Sengled Floodlights: Forced Lockout"
+description: "Disables hardware-level motion triggers"
 mode: parallel
-trigger:
-  - platform: state
+triggers:
+  - trigger: state
     entity_id:
-      - light.floodlight_1 # Replace with your entity IDs
-      - light.floodlight_2
-    from: "unavailable"
-action:
-  - delay: "00:00:08" # Crucial: Sengled bulbs need a long boot time to accept FC01 commands
+      - light.sengled_shed_flood_light
+      - light.sengled_flood_light_2_r
+    # No "from" or "to" makes it fire on ANY status change (power up, on, off)
+actions:
+  - delay: "00:00:10" # Give the bulb more time to join the mesh
   - repeat:
       for_each:
-        - "b0:ce:18:xx:xx:xx:xx:01" # Replace with Bulb 1 IEEE
-        - "b0:ce:18:xx:xx:xx:xx:02" # Replace with Bulb 2 IEEE
+        - "B0:CE:18:14:03:1A:2F:CE"
+        - "B0:CE:18:14:03:1A:0F:A4"
       sequence:
-        - service: zha.set_zigbee_cluster_attribute
-          data:
-            ieee: "{{ repeat.item }}"
-            endpoint_id: 1
-            cluster_id: 64513   # Hex 0xFC01
-            cluster_type: in
-            attribute: 1        # Attribute 0x0001: enable_auto_on_off
-            value: 0            # 0 = False / Disabled
-        - delay: "00:00:01"
-        - service: zha.set_zigbee_cluster_attribute
+        # Disable Motion Auto-On
+        - action: zha.set_zigbee_cluster_attribute
           data:
             ieee: "{{ repeat.item }}"
             endpoint_id: 1
             cluster_id: 64513
             cluster_type: in
-            attribute: 0        # Attribute 0x0000: trigger_condition
-            value: 1            # 1 = "Weak Light" (prevents trigger even if attribute 1 fails)
+            attribute: 1
+            value: 0
+            manufacturer: 4448
+        - delay: "00:00:01"
+        # Set Trigger Condition to 1 (Daylight mode) as a backup
+        - action: zha.set_zigbee_cluster_attribute
+          data:
+            ieee: "{{ repeat.item }}"
+            endpoint_id: 1
+            cluster_id: 64513
+            cluster_type: in
+            attribute: 0
+            value: 1
+            manufacturer: 4448
