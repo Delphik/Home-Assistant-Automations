@@ -1,7 +1,8 @@
 from zigpy.quirks import CustomDevice
 from zigpy.quirks.v2 import CustomCluster
 import zigpy.types as t
-from zigpy.zcl.clusters import general, security, homeautomation
+from zigpy.zcl.clusters import general, security
+from zigpy.zcl.clusters.smartenergy import Metering
 from zigpy.profiles import zha
 
 class ManuSpecificSengledMotionSensor(CustomCluster):
@@ -10,9 +11,9 @@ class ManuSpecificSengledMotionSensor(CustomCluster):
     name = "ManuSpecificSengledMotionSensor"
     attributes = {
         0x0001: ("enable_auto_on_off", t.Bool),
-        # Optional: add these later if you want them as entities
-        # 0x0000: ("trigger_condition", t.uint8_t),
+        # Optional attributes you can uncomment later:
         # 0x0002: ("off_delay", t.uint16_t),
+        # 0x0000: ("trigger_condition", t.uint8_t),
     }
 
 class SengledE13N11(CustomDevice):
@@ -30,10 +31,10 @@ class SengledE13N11(CustomDevice):
                     0x0005,  # Scenes
                     0x0006,  # OnOff
                     0x0008,  # LevelControl
-                    0x0500,  # IAS Zone (motion sensor)
-                    0x0702,  # Simple Metering
+                    0x0500,  # IAS Zone (motion)
+                    0x0702,  # Metering
                     0x0b05,  # Diagnostics
-                    0xfc01,  # Sengled custom motion cluster
+                    0xfc01,  # Sengled custom
                 ],
                 "output_clusters": [0x0019],  # OTA
             }
@@ -50,9 +51,9 @@ class SengledE13N11(CustomDevice):
                     general.OnOff,
                     general.LevelControl,
                     security.IasZone,
-                    homeautomation.SimpleMetering,
+                    Metering,                          # ← fixed here
                     general.Diagnostics,
-                    ManuSpecificSengledMotionSensor,   # ← this is what exposes the switch
+                    ManuSpecificSengledMotionSensor,   # ← this exposes the switch
                 ],
                 "output_clusters": [general.Ota],
             }
