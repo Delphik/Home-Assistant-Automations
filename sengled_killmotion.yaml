@@ -1,3 +1,13 @@
+alias: "Sengled Floodlights: Final Hardware Lockout"
+description: Disables hardware-level motion triggers
+triggers:
+  - trigger: state
+    entity_id:
+      - light.sengled_shed_flood_light
+      - light.sengled_flood_light_2_r
+    from: unavailable
+  - trigger: homeassistant
+    event: start
 actions:
   - delay: "00:00:20"
   - repeat:
@@ -24,3 +34,4 @@ actions:
             cluster_type: in
             attribute: 0x0000  # Explicitly using Hex 0x0000 (The likely cause of Log 2's error)
             value: 1
+mode: parallel
