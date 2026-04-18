@@ -1,30 +1,27 @@
 alias: "Sengled Floodlights: Final Hardware Lockout"
-description: "Disables hardware-level motion triggers on power-up and HA restart"
-mode: parallel
+description: Disables hardware-level motion triggers on power-up and HA restart
 triggers:
-  # Trigger 1: When the bulbs reconnect to the Zigbee mesh
   - trigger: state
     entity_id:
       - light.sengled_shed_flood_light
       - light.sengled_flood_light_2_r
-    from: "unavailable"
-  # Trigger 2: When Home Assistant finishes booting up
+    from: unavailable
   - trigger: homeassistant
     event: start
 actions:
-  - delay: "00:00:15" # Increased delay to ensure Zigbee mesh is fully stable
+  - delay: "00:00:15"
   - repeat:
       for_each:
-        - "B0:CE:18:14:03:1A:2F:CE"
-        - "B0:CE:18:14:03:1A:0F:A4"
+        - B0:CE:18:14:03:1A:2F:CE
+        - B0:CE:18:14:03:1A:0F:A4
       sequence:
         - action: zha.set_zigbee_cluster_attribute
           data:
             ieee: "{{ repeat.item }}"
             endpoint_id: 1
-            cluster_id: 0xfc01
+            cluster_id: 64513
             cluster_type: in
-            attribute: 0x0001
+            attribute: 1
             value: 0
             manufacturer: 4448
         - delay: "00:00:01"
@@ -32,8 +29,9 @@ actions:
           data:
             ieee: "{{ repeat.item }}"
             endpoint_id: 1
-            cluster_id: 0xfc01
+            cluster_id: 64513
             cluster_type: in
-            attribute: 0x0000
+            attribute: 0
             value: 1
             manufacturer: 4448
+mode: parallel
