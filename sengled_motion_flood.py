@@ -11,7 +11,7 @@ class ManuSpecificSengledMotionSensor(CustomCluster):
     name = "ManuSpecificSengledMotionSensor"
     attributes = {
         0x0001: ("enable_auto_on_off", t.Bool),
-        # Optional attributes you can uncomment later:
+        # Optional attributes (uncomment if you want them later):
         # 0x0002: ("off_delay", t.uint16_t),
         # 0x0000: ("trigger_condition", t.uint8_t),
     }
@@ -33,7 +33,7 @@ class SengledE13N11(CustomDevice):
                     0x0008,  # LevelControl
                     0x0500,  # IAS Zone (motion)
                     0x0702,  # Metering
-                    0x0b05,  # Diagnostics
+                    0x0b05,  # Diagnostics (kept in signature only)
                     0xfc01,  # Sengled custom
                 ],
                 "output_clusters": [0x0019],  # OTA
@@ -51,8 +51,8 @@ class SengledE13N11(CustomDevice):
                     general.OnOff,
                     general.LevelControl,
                     security.IasZone,
-                    Metering,                          # ← fixed here
-                    general.Diagnostics,
+                    Metering,
+                    # Diagnostics intentionally omitted (not needed for light/motion/custom switch)
                     ManuSpecificSengledMotionSensor,   # ← this exposes the switch
                 ],
                 "output_clusters": [general.Ota],
