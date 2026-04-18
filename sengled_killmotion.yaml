@@ -1,0 +1,24 @@
+alias: "Sengled Floodlights: Force Motion OFF"
+description: "Disables motion auto-start whenever bulbs reconnect to the network"
+mode: parallel # Allows the automation to run for both bulbs at the same time
+max: 10
+trigger:
+  - platform: state
+    entity_id:
+      - light.floodlight_1 # CHANGE TO YOUR ENTITY IDs
+      - light.floodlight_2
+    from: "unavailable"
+action:
+  - repeat:
+      for_each:
+        - "b0:ce:18:xx:xx:xx:xx:01" # REPLACE WITH BULB 1 IEEE
+        - "b0:ce:18:xx:xx:xx:xx:02" # REPLACE WITH BULB 2 IEEE
+      sequence:
+        - service: zha.set_zigbee_cluster_attribute
+          data:
+            ieee: "{{ repeat.item }}"
+            endpoint_id: 1
+            cluster_id: 64513   # Sengled custom cluster 0xFC01
+            cluster_type: in
+            attribute: 1        # Motion start attribute
+            value: 0            # 0 = Disabled
