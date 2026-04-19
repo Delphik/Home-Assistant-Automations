@@ -1,5 +1,5 @@
 alias: "Sengled Floodlights: Final Hardware Lockout"
-description: "Disables hardware motion auto-on"
+description: "Disables hardware motion auto-on (enableAutoOnOff = false)"
 mode: parallel
 
 trigger:
@@ -12,40 +12,40 @@ trigger:
     event: start
 
 action:
-  - delay: "00:01:00"   # Wait 60 seconds for network/bulbs to stabilize
+  - delay: "00:01:00"   # 60 seconds — important for bulbs to be fully awake
 
   - repeat:
       for_each:
         - "B0:CE:18:14:03:1A:2F:CE"
         - "B0:CE:18:14:03:1A:0F:A4"
       sequence:
-        # Disable auto-on
-        - service: zha.set_zigbee_cluster_attribute
+        # Disable auto-on (main goal)
+        - service: zha_toolkit.write_attr
           data:
             ieee: "{{ repeat.item }}"
-            endpoint_id: 1
-            cluster_id: 0xfc01
-            cluster_type: "in"
-            attribute: 0x0001
-            value: false
+            endpoint: 1
+            cluster: 0xfc01
+            attribute: 1                    # enableAutoOnOff
+            value: 0
             manufacturer: 0x1160
+            allow_create: true
           continue_on_error: true
 
         - delay: "00:00:03"
 
-        # Optional trigger condition
-        - service: zha.set_zigbee_cluster_attribute
+        # Optional: Set trigger condition (helps with sensor stability)
+        - service: zha_toolkit.write_attr
           data:
             ieee: "{{ repeat.item }}"
-            endpoint_id: 1
-            cluster_id: 0xfc01
-            cluster_type: "in"
-            attribute: 0x0000
+            endpoint: 1
+            cluster: 0xfc01
+            attribute: 0
             value: 1
             manufacturer: 0x1160
+            allow_create: true
           continue_on_error: true
 
         - service: logbook.log
           data:
             name: "Sengled Motion Lockout"
-            message: "Applied hardware lockout to {{ repeat.item }}"
+            message: "Hardware lockout (enableAutoOnOff=0) applied to {{ repeat.item }}"
