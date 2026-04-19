@@ -12,20 +12,20 @@ trigger:
     event: start
 
 action:
-  - delay: "00:01:00"   # 60 seconds — important for bulbs to be fully awake
+  - delay: "00:01:00"   # Wait for bulbs to stabilize
 
   - repeat:
       for_each:
         - "B0:CE:18:14:03:1A:2F:CE"
         - "B0:CE:18:14:03:1A:0F:A4"
       sequence:
-        # Disable auto-on (main goal)
-        - service: zha_toolkit.write_attr
+        # Disable auto-on (enableAutoOnOff = false)
+        - service: zha_toolkit.attr_write
           data:
             ieee: "{{ repeat.item }}"
             endpoint: 1
             cluster: 0xfc01
-            attribute: 1                    # enableAutoOnOff
+            attribute: 1
             value: 0
             manufacturer: 0x1160
             allow_create: true
@@ -33,8 +33,8 @@ action:
 
         - delay: "00:00:03"
 
-        # Optional: Set trigger condition (helps with sensor stability)
-        - service: zha_toolkit.write_attr
+        # Optional: Set trigger condition
+        - service: zha_toolkit.attr_write
           data:
             ieee: "{{ repeat.item }}"
             endpoint: 1
@@ -48,4 +48,4 @@ action:
         - service: logbook.log
           data:
             name: "Sengled Motion Lockout"
-            message: "Hardware lockout (enableAutoOnOff=0) applied to {{ repeat.item }}"
+            message: "Hardware lockout applied to {{ repeat.item }}"
