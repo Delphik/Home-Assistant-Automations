@@ -1,5 +1,5 @@
 alias: "Sengled Floodlights: Final Hardware Lockout"
-description: "Disables hardware motion auto-on (enableAutoOnOff = false) on HA start or bulb rejoin"
+description: "Disables hardware motion auto-on via manufacturer-specific cluster"
 mode: parallel
 
 trigger:
@@ -12,22 +12,21 @@ trigger:
     event: start
 
 action:
-  # Wait for Zigbee network to be ready
   - wait_for_trigger:
       - platform: state
-        entity_id: binary_sensor.zigbee_network_status  # ← change if your sensor has a different name
+        entity_id: binary_sensor.zigbee_network_status  # ← update if name differs
         to: "on"
     timeout: "00:00:30"
     continue_on_timeout: true
 
-  - delay: "00:01:00"  # 60 seconds — gives bulbs time to fully settle after rejoin
+  - delay: "00:00:60"  # 60 seconds for stability
 
   - repeat:
       for_each:
         - "B0:CE:18:14:03:1A:2F:CE"
         - "B0:CE:18:14:03:1A:0F:A4"
       sequence:
-        # 1. Disable auto-on (enableAutoOnOff = false)
+        # Disable auto-on (enableAutoOnOff = false)
         - service: zha.set_zigbee_cluster_attribute
           data:
             ieee: "{{ repeat.item }}"
@@ -35,13 +34,13 @@ action:
             cluster_id: 0xfc01
             cluster_type: "in"
             attribute: 0x0001
-            value: 0
+            value: false
             manufacturer: 0x1160
           continue_on_error: true
 
         - delay: "00:00:03"
 
-        # 2. Set trigger condition (helps put the sensor in correct mode)
+        # Optional: Set trigger condition (common value used in working examples)
         - service: zha.set_zigbee_cluster_attribute
           data:
             ieee: "{{ repeat.item }}"
@@ -53,9 +52,7 @@ action:
             manufacturer: 0x1160
           continue_on_error: true
 
-        # Log success/failure for debugging
         - service: logbook.log
           data:
-            name: "Sengled Hardware Lockout"
-            message: "Applied motion lockout (enableAutoOnOff=0) to {{ repeat.item }}"
-            domain: "automation"
+            name: "Sengled Motion Lockout"
+            message: "Successfully set enableAutoOnOff=false for {{ repeat.item }}"
