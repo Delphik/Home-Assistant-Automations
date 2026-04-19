@@ -1,37 +1,61 @@
 alias: "Sengled Floodlights: Final Hardware Lockout"
-description: Disables hardware-level motion triggers
-triggers:
-  - trigger: state
+description: "Disables hardware motion auto-on (enableAutoOnOff = false) on HA start or bulb rejoin"
+mode: parallel
+
+trigger:
+  - platform: state
     entity_id:
       - light.sengled_shed_flood_light
       - light.sengled_flood_light_2_r
-    from: unavailable
-  - trigger: homeassistant
+    from: "unavailable"
+  - platform: homeassistant
     event: start
-actions:
-  - delay: "00:00:20"
+
+action:
+  # Wait for Zigbee network to be ready
+  - wait_for_trigger:
+      - platform: state
+        entity_id: binary_sensor.zigbee_network_status  # ← change if your sensor has a different name
+        to: "on"
+    timeout: "00:00:30"
+    continue_on_timeout: true
+
+  - delay: "00:01:00"  # 60 seconds — gives bulbs time to fully settle after rejoin
+
   - repeat:
       for_each:
         - "B0:CE:18:14:03:1A:2F:CE"
         - "B0:CE:18:14:03:1A:0F:A4"
       sequence:
-        # Step 1: Disable Motion Auto-On
-        - action: zha.set_zigbee_cluster_attribute
+        # 1. Disable auto-on (enableAutoOnOff = false)
+        - service: zha.set_zigbee_cluster_attribute
           data:
             ieee: "{{ repeat.item }}"
             endpoint_id: 1
             cluster_id: 0xfc01
-            cluster_type: in
-            attribute: 0x0001  # Explicitly using Hex
-            value: 0           # Sending as integer 0
-        - delay: "00:00:02"
-        # Step 2: Set Trigger Condition to "Weak Light"
-        - action: zha.set_zigbee_cluster_attribute
+            cluster_type: "in"
+            attribute: 0x0001
+            value: 0
+            manufacturer: 0x1160
+          continue_on_error: true
+
+        - delay: "00:00:03"
+
+        # 2. Set trigger condition (helps put the sensor in correct mode)
+        - service: zha.set_zigbee_cluster_attribute
           data:
             ieee: "{{ repeat.item }}"
             endpoint_id: 1
             cluster_id: 0xfc01
-            cluster_type: in
-            attribute: 0x0000  # Explicitly using Hex 0x0000 (The likely cause of Log 2's error)
+            cluster_type: "in"
+            attribute: 0x0000
             value: 1
-mode: parallel
+            manufacturer: 0x1160
+          continue_on_error: true
+
+        # Log success/failure for debugging
+        - service: logbook.log
+          data:
+            name: "Sengled Hardware Lockout"
+            message: "Applied motion lockout (enableAutoOnOff=0) to {{ repeat.item }}"
+            domain: "automation"
